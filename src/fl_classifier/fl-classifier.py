@@ -69,6 +69,27 @@ FOLDER_CATEGORIES = {
     'Web': ['web', 'website', 'site', 'html']
 }
 
+
+def determine_folder_category(folder_name):
+    """
+    Determines the category of a folder based on its name.
+
+    Args:
+        folder_name (str): Name of the folder
+
+    Returns:
+        str: Category name or 'Others' if no match found
+    """
+    folder_name_lower = folder_name.lower()
+
+    for category, keywords in FOLDER_CATEGORIES.items():
+        for keyword in keywords:
+            if keyword in folder_name_lower:
+                return category
+
+    return 'Others'
+
+
 def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='%Y-%m', create_symlinks=False, dry_run=False, include_folders=False):
     """
     Organizes files and optionally folders based on their timestamp (creation, modification, or access time)
