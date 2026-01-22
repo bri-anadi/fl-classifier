@@ -90,7 +90,7 @@ def determine_folder_category(folder_name):
     return 'Others'
 
 
-def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='%Y-%m', create_symlinks=False, dry_run=False, include_folders=False):
+def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='%Y-%m', create_symlinks=False, dry_run=False, include_folders=False, use_copy=False):
     """
     Organizes files and optionally folders based on their timestamp (creation, modification, or access time)
 
@@ -102,6 +102,7 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
         create_symlinks (bool): If True, create symlinks instead of moving items
         dry_run (bool): If True, only show what would be done without actually doing it
         include_folders (bool): If True, also organize folders
+        use_copy (bool): If True, copy items instead of moving them
     """
     source_path = Path(source_dir).expanduser().resolve()
     target_path = Path(target_dir).expanduser().resolve()
@@ -161,13 +162,16 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
                 continue
 
             # Log action to be taken
-            action = "Symlink" if create_symlinks else "Move"
+            action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
             logger.info(f"{action} file: {file_path.name} -> {time_str}/")
 
             if not dry_run:
                 if create_symlinks:
                     # Create symlink
                     target_file.symlink_to(file_path)
+                elif use_copy:
+                    # Copy file
+                    shutil.copy2(str(file_path), str(target_file))
                 else:
                     # Move file
                     shutil.move(str(file_path), str(target_file))
@@ -214,13 +218,16 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
                     continue
 
                 # Log action to be taken
-                action = "Symlink" if create_symlinks else "Move"
+                action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
                 logger.info(f"{action} folder: {folder_path.name} -> {time_str}/Folders/")
 
                 if not dry_run:
                     if create_symlinks:
                         # Create symlink
                         target_folder.symlink_to(folder_path, target_is_directory=True)
+                    elif use_copy:
+                        # Copy folder
+                        shutil.copytree(str(folder_path), str(target_folder))
                     else:
                         # Move folder
                         shutil.move(str(folder_path), str(target_folder))
@@ -240,7 +247,7 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
     logger.info(f"  - Errors: {stats['errors']}")
 
 
-def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False, classify_folders=False):
+def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False, classify_folders=False, use_copy=False):
     """
     Classifies files and optionally folders from source_dir into subfolders in target_dir
     based on file extensions and folder naming patterns.
@@ -251,6 +258,7 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
         create_symlinks (bool): If True, create symlinks instead of moving/copying items
         dry_run (bool): If True, only show what would be done without actually doing it
         classify_folders (bool): If True, also classify folders
+        use_copy (bool): If True, copy items instead of moving them
     """
     source_path = Path(source_dir).expanduser().resolve()
     target_path = Path(target_dir).expanduser().resolve()
@@ -310,13 +318,16 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
                 continue
 
             # Log action to be taken
-            action = "Symlink" if create_symlinks else "Move"
+            action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
             logger.info(f"{action} file: {file_path.name} ({extension}) -> {category}")
 
             if not dry_run:
                 if create_symlinks:
                     # Create symlink
                     target_file.symlink_to(file_path)
+                elif use_copy:
+                    # Copy file
+                    shutil.copy2(str(file_path), str(target_file))
                 else:
                     # Move file
                     shutil.move(str(file_path), str(target_file))
@@ -356,13 +367,16 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
                     continue
 
                 # Log action to be taken
-                action = "Symlink" if create_symlinks else "Move"
+                action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
                 logger.info(f"{action} folder: {folder_name} -> Folders_{category}")
 
                 if not dry_run:
                     if create_symlinks:
                         # Create symlink
                         target_folder.symlink_to(folder_path, target_is_directory=True)
+                    elif use_copy:
+                        # Copy folder
+                        shutil.copytree(str(folder_path), str(target_folder))
                     else:
                         # Move folder
                         shutil.move(str(folder_path), str(target_folder))
@@ -427,10 +441,8 @@ def main():
             print("Operation canceled.")
             return
 
-    # If copy option is selected, override the method used
+    # Log the mode being used
     if args.copy:
-        original_move = shutil.move
-        shutil.move = shutil.copy2
         logger.info(f"Mode: Copying {'files and folders' if args.folders else 'files'} (not moving)")
 
     try:
@@ -442,7 +454,8 @@ def main():
                 time_format=args.time_format,
                 create_symlinks=args.symlinks,
                 dry_run=args.dry_run,
-                include_folders=args.folders
+                include_folders=args.folders,
+                use_copy=args.copy
             )
         else:
             # Default: extension-based classification
@@ -450,16 +463,13 @@ def main():
                 args.source, args.target,
                 create_symlinks=args.symlinks,
                 dry_run=args.dry_run,
-                classify_folders=args.folders
+                classify_folders=args.folders,
+                use_copy=args.copy
             )
     except KeyboardInterrupt:
         logger.info("Operation stopped by user.")
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-    finally:
-        # Restore original function if it was changed
-        if args.copy:
-            shutil.move = original_move
 
 if __name__ == "__main__":
     main()
