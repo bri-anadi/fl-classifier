@@ -70,6 +70,7 @@ FOLDER_CATEGORIES = {
 }
 
 
+
 def determine_folder_category(folder_name):
     """
     Determines the category of a folder based on its name.
@@ -90,7 +91,43 @@ def determine_folder_category(folder_name):
     return 'Others'
 
 
-def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='%Y-%m', create_symlinks=False, dry_run=False, include_folders=False, use_copy=False):
+def get_unique_path(target_path, strategy='skip'):
+    """
+    Handle file path conflicts based on strategy.
+
+    Args:
+        target_path (Path): Target file path
+        strategy (str): 'skip', 'rename', or 'overwrite'
+
+    Returns:
+        tuple: (Path, bool, str) - (final_path, should_proceed, action_taken)
+               action_taken is 'skipped', 'renamed', 'overwritten', or 'created'
+    """
+    if not target_path.exists():
+        return target_path, True, 'created'
+
+    if strategy == 'skip':
+        return target_path, False, 'skipped'
+    elif strategy == 'rename':
+        stem = target_path.stem
+        suffix = target_path.suffix
+        parent = target_path.parent
+        counter = 1
+
+        while True:
+            new_name = f"{stem}_{counter}{suffix}"
+            new_path = parent / new_name
+            if not new_path.exists():
+                return new_path, True, 'renamed'
+            counter += 1
+    elif strategy == 'overwrite':
+        return target_path, True, 'overwritten'
+    else:
+        raise ValueError(f"Unknown conflict strategy: {strategy}")
+
+
+
+def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='%Y-%m', create_symlinks=False, dry_run=False, include_folders=False, use_copy=False, on_conflict='skip'):
     """
     Organizes files and optionally folders based on their timestamp (creation, modification, or access time)
 
@@ -103,6 +140,7 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
         dry_run (bool): If True, only show what would be done without actually doing it
         include_folders (bool): If True, also organize folders
         use_copy (bool): If True, copy items instead of moving them
+        on_conflict (str): How to handle conflicts: 'skip', 'rename', or 'overwrite'
     """
     source_path = Path(source_dir).expanduser().resolve()
     target_path = Path(target_dir).expanduser().resolve()
@@ -155,26 +193,33 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
             # Target file path
             target_file = time_path / file_path.name
 
-            # Check if file already exists in target directory
-            if target_file.exists():
-                logger.warning(f"File already exists in target: {target_file}")
+            # Handle file conflicts
+            final_path, should_proceed, conflict_action = get_unique_path(target_file, on_conflict)
+
+            if not should_proceed:
+                logger.warning(f"File already exists, skipping: {target_file}")
                 stats['skipped'] += 1
                 continue
 
             # Log action to be taken
             action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
-            logger.info(f"{action} file: {file_path.name} -> {time_str}/")
+            if conflict_action == 'renamed':
+                logger.info(f"{action} file: {file_path.name} -> {time_str}/{final_path.name} (renamed)")
+            elif conflict_action == 'overwritten':
+                logger.warning(f"{action} file: {file_path.name} -> {time_str}/ (overwriting existing)")
+            else:
+                logger.info(f"{action} file: {file_path.name} -> {time_str}/")
 
             if not dry_run:
                 if create_symlinks:
                     # Create symlink
-                    target_file.symlink_to(file_path)
+                    final_path.symlink_to(file_path)
                 elif use_copy:
                     # Copy file
-                    shutil.copy2(str(file_path), str(target_file))
+                    shutil.copy2(str(file_path), str(final_path))
                 else:
                     # Move file
-                    shutil.move(str(file_path), str(target_file))
+                    shutil.move(str(file_path), str(final_path))
 
             stats['files_organized'] += 1
 
@@ -211,26 +256,33 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
                 # Target folder path
                 target_folder = time_path / folder_path.name
 
-                # Check if folder already exists in target directory
-                if target_folder.exists():
-                    logger.warning(f"Folder already exists in target: {target_folder}")
+                # Handle folder conflicts
+                final_path, should_proceed, conflict_action = get_unique_path(target_folder, on_conflict)
+
+                if not should_proceed:
+                    logger.warning(f"Folder already exists, skipping: {target_folder}")
                     stats['skipped'] += 1
                     continue
 
                 # Log action to be taken
                 action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
-                logger.info(f"{action} folder: {folder_path.name} -> {time_str}/Folders/")
+                if conflict_action == 'renamed':
+                    logger.info(f"{action} folder: {folder_path.name} -> {time_str}/Folders/{final_path.name} (renamed)")
+                elif conflict_action == 'overwritten':
+                    logger.warning(f"{action} folder: {folder_path.name} -> {time_str}/Folders/ (overwriting existing)")
+                else:
+                    logger.info(f"{action} folder: {folder_path.name} -> {time_str}/Folders/")
 
                 if not dry_run:
                     if create_symlinks:
                         # Create symlink
-                        target_folder.symlink_to(folder_path, target_is_directory=True)
+                        final_path.symlink_to(folder_path, target_is_directory=True)
                     elif use_copy:
                         # Copy folder
-                        shutil.copytree(str(folder_path), str(target_folder))
+                        shutil.copytree(str(folder_path), str(final_path))
                     else:
                         # Move folder
-                        shutil.move(str(folder_path), str(target_folder))
+                        shutil.move(str(folder_path), str(final_path))
 
                 stats['folders_organized'] += 1
 
@@ -247,7 +299,7 @@ def organize_by_time(source_dir, target_dir, time_attr='modified', time_format='
     logger.info(f"  - Errors: {stats['errors']}")
 
 
-def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False, classify_folders=False, use_copy=False):
+def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False, classify_folders=False, use_copy=False, on_conflict='skip'):
     """
     Classifies files and optionally folders from source_dir into subfolders in target_dir
     based on file extensions and folder naming patterns.
@@ -259,6 +311,7 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
         dry_run (bool): If True, only show what would be done without actually doing it
         classify_folders (bool): If True, also classify folders
         use_copy (bool): If True, copy items instead of moving them
+        on_conflict (str): How to handle conflicts: 'skip', 'rename', or 'overwrite'
     """
     source_path = Path(source_dir).expanduser().resolve()
     target_path = Path(target_dir).expanduser().resolve()
@@ -311,26 +364,33 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
             # Target file path
             target_file = category_path / file_path.name
 
-            # Check if file already exists in target directory
-            if target_file.exists():
-                logger.warning(f"File already exists in target: {target_file}")
+            # Handle file conflicts
+            final_path, should_proceed, conflict_action = get_unique_path(target_file, on_conflict)
+
+            if not should_proceed:
+                logger.warning(f"File already exists, skipping: {target_file}")
                 stats['skipped'] += 1
                 continue
 
             # Log action to be taken
             action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
-            logger.info(f"{action} file: {file_path.name} ({extension}) -> {category}")
+            if conflict_action == 'renamed':
+                logger.info(f"{action} file: {file_path.name} ({extension}) -> {category}/{final_path.name} (renamed)")
+            elif conflict_action == 'overwritten':
+                logger.warning(f"{action} file: {file_path.name} ({extension}) -> {category} (overwriting existing)")
+            else:
+                logger.info(f"{action} file: {file_path.name} ({extension}) -> {category}")
 
             if not dry_run:
                 if create_symlinks:
                     # Create symlink
-                    target_file.symlink_to(file_path)
+                    final_path.symlink_to(file_path)
                 elif use_copy:
                     # Copy file
-                    shutil.copy2(str(file_path), str(target_file))
+                    shutil.copy2(str(file_path), str(final_path))
                 else:
                     # Move file
-                    shutil.move(str(file_path), str(target_file))
+                    shutil.move(str(file_path), str(final_path))
 
             stats['files_classified'] += 1
 
@@ -360,26 +420,33 @@ def classify_items(source_dir, target_dir, create_symlinks=False, dry_run=False,
                 # Target folder path
                 target_folder = category_path / folder_name
 
-                # Check if folder already exists in target directory
-                if target_folder.exists():
-                    logger.warning(f"Folder already exists in target: {target_folder}")
+                # Handle folder conflicts
+                final_path, should_proceed, conflict_action = get_unique_path(target_folder, on_conflict)
+
+                if not should_proceed:
+                    logger.warning(f"Folder already exists, skipping: {target_folder}")
                     stats['skipped'] += 1
                     continue
 
                 # Log action to be taken
                 action = "Symlink" if create_symlinks else "Copy" if use_copy else "Move"
-                logger.info(f"{action} folder: {folder_name} -> Folders_{category}")
+                if conflict_action == 'renamed':
+                    logger.info(f"{action} folder: {folder_name} -> Folders_{category}/{final_path.name} (renamed)")
+                elif conflict_action == 'overwritten':
+                    logger.warning(f"{action} folder: {folder_name} -> Folders_{category} (overwriting existing)")
+                else:
+                    logger.info(f"{action} folder: {folder_name} -> Folders_{category}")
 
                 if not dry_run:
                     if create_symlinks:
                         # Create symlink
-                        target_folder.symlink_to(folder_path, target_is_directory=True)
+                        final_path.symlink_to(folder_path, target_is_directory=True)
                     elif use_copy:
                         # Copy folder
-                        shutil.copytree(str(folder_path), str(target_folder))
+                        shutil.copytree(str(folder_path), str(final_path))
                     else:
                         # Move folder
-                        shutil.move(str(folder_path), str(target_folder))
+                        shutil.move(str(folder_path), str(final_path))
 
                 stats['folders_classified'] += 1
 
@@ -421,6 +488,10 @@ def main():
     parser.add_argument("-f", "--folders", action="store_true",
                         help="Also process folders (not just files)")
 
+    # Collision handling options
+    parser.add_argument("--on-conflict", choices=["skip", "rename", "overwrite"], default="skip",
+                        help="How to handle file conflicts (default: skip)")
+
     # Time-based organization options
     time_group = parser.add_argument_group("Time-based organization options")
     time_group.add_argument("--time-attr", choices=["modified", "created", "accessed"], default="modified",
@@ -455,7 +526,8 @@ def main():
                 create_symlinks=args.symlinks,
                 dry_run=args.dry_run,
                 include_folders=args.folders,
-                use_copy=args.copy
+                use_copy=args.copy,
+                on_conflict=args.on_conflict
             )
         else:
             # Default: extension-based classification
@@ -464,7 +536,8 @@ def main():
                 create_symlinks=args.symlinks,
                 dry_run=args.dry_run,
                 classify_folders=args.folders,
-                use_copy=args.copy
+                use_copy=args.copy,
+                on_conflict=args.on_conflict
             )
     except KeyboardInterrupt:
         logger.info("Operation stopped by user.")

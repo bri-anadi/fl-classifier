@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fl-classifier"
-version = "0.1.3"
+version = "0.2.0"
 description = "A tool to automatically classify files based on extension or timestamp"
 readme = "README.md"
 authors = [{name = "Brian Adi", email = "maill.brianadi@gmail.com"}]
