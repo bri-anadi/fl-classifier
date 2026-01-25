@@ -48,16 +48,10 @@ Un utilitaire Python multiplateforme puissant pour organiser automatiquement les
 
 ## Installation
 
-Téléchargez le script et rendez-le exécutable :
+Si vous avez le code source, vous pouvez l'exécuter en tant que module :
 
 ```bash
-chmod +x file_classifier.py
-```
-
-Ou exécutez-le directement avec Python :
-
-```bash
-python file_classifier.py [options]
+python -m fl_classifier [options]
 ```
 
 ## Utilisation
@@ -65,7 +59,7 @@ python file_classifier.py [options]
 ### Utilisation de Base
 
 ```bash
-python file_classifier.py REP_SOURCE [REP_CIBLE]
+python -m fl_classifier REP_SOURCE [REP_CIBLE]
 ```
 
 Si `REP_CIBLE` n'est pas spécifié, les fichiers seront organisés dans un nouveau répertoire appelé `./classified`.
@@ -101,29 +95,29 @@ Si `REP_CIBLE` n'est pas spécifié, les fichiers seront organisés dans un nouv
 
 ```bash
 # Classer tous les fichiers du dossier Téléchargements par extension
-python file_classifier.py ~/Downloads ~/Organized
+python -m fl_classifier ~/Downloads ~/Organized
 
 # Classer les fichiers et dossiers, créer des copies au lieu de déplacer
-python file_classifier.py ~/Documents ~/Organized -f -c
+python -m fl_classifier ~/Documents ~/Organized -f -c
 
 # Créer des liens symboliques au lieu de déplacer les fichiers
-python file_classifier.py ~/Pictures ~/Organized -l
+python -m fl_classifier ~/Pictures ~/Organized -l
 
 # Prévisualiser ce qui se passerait sans effectuer de changements
-python file_classifier.py ~/Desktop -d
+python -m fl_classifier ~/Desktop -d
 ```
 
 ### Organisation Basée sur le Temps
 
 ```bash
 # Organiser les fichiers par leur temps de modification (année-mois)
-python file_classifier.py ~/Documents ~/TimeOrganized -t
+python -m fl_classifier ~/Documents ~/TimeOrganized -t
 
 # Organiser par date de création avec format année-mois-jour
-python file_classifier.py ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
+python -m fl_classifier ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
 
 # Organiser les fichiers et dossiers par temps d'accès
-python file_classifier.py ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
+python -m fl_classifier ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
 ```
 
 ## FAQ

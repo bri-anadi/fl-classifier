@@ -48,16 +48,10 @@ Una potente utilidad Python multiplataforma para organizar archivos y carpetas a
 
 ## Instalación
 
-Descarga el script y hazlo ejecutable:
+Si tienes el código fuente, puedes ejecutarlo como un módulo:
 
 ```bash
-chmod +x file_classifier.py
-```
-
-O ejecútalo directamente con Python:
-
-```bash
-python file_classifier.py [opciones]
+python -m fl_classifier [opciones]
 ```
 
 ## Uso
@@ -65,7 +59,7 @@ python file_classifier.py [opciones]
 ### Uso Básico
 
 ```bash
-python file_classifier.py DIR_ORIGEN [DIR_DESTINO]
+python -m fl_classifier DIR_ORIGEN [DIR_DESTINO]
 ```
 
 Si no se especifica `DIR_DESTINO`, los archivos se organizarán en un nuevo directorio llamado `./classified`.
@@ -101,29 +95,29 @@ Si no se especifica `DIR_DESTINO`, los archivos se organizarán en un nuevo dire
 
 ```bash
 # Clasificar todos los archivos en la carpeta Descargas por extensión
-python file_classifier.py ~/Downloads ~/Organized
+python -m fl_classifier ~/Downloads ~/Organized
 
 # Clasificar archivos y carpetas, crear copias en lugar de moverlos
-python file_classifier.py ~/Documents ~/Organized -f -c
+python -m fl_classifier ~/Documents ~/Organized -f -c
 
 # Crear enlaces simbólicos en lugar de mover archivos
-python file_classifier.py ~/Pictures ~/Organized -l
+python -m fl_classifier ~/Pictures ~/Organized -l
 
 # Vista previa de lo que sucedería sin realizar cambios
-python file_classifier.py ~/Desktop -d
+python -m fl_classifier ~/Desktop -d
 ```
 
 ### Organización Basada en Tiempo
 
 ```bash
 # Organizar archivos por su tiempo de modificación (año-mes)
-python file_classifier.py ~/Documents ~/TimeOrganized -t
+python -m fl_classifier ~/Documents ~/TimeOrganized -t
 
 # Organizar por fecha de creación con formato año-mes-día
-python file_classifier.py ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
+python -m fl_classifier ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
 
 # Organizar archivos y carpetas por tiempo de acceso
-python file_classifier.py ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
+python -m fl_classifier ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
 ```
 
 ## Preguntas Frecuentes

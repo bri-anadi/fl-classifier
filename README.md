@@ -60,16 +60,10 @@ A powerful, cross-platform Python utility for organizing files and folders autom
 
 ## Installation
 
-Download the script and make it executable:
+If you have the source code, you can run it as a module:
 
 ```bash
-chmod +x file_classifier.py
-```
-
-Or run it directly with Python:
-
-```bash
-python file_classifier.py [options]
+python -m fl_classifier [options]
 ```
 
 ## Usage
@@ -77,7 +71,7 @@ python file_classifier.py [options]
 ### Basic Usage
 
 ```bash
-python file_classifier.py SOURCE_DIR [TARGET_DIR]
+python -m fl_classifier SOURCE_DIR [TARGET_DIR]
 ```
 
 If `TARGET_DIR` is not specified, files will be organized in a new directory called `./classified`.
@@ -132,29 +126,29 @@ See the [examples/](examples/) directory for detailed, runnable examples:
 
 ```bash
 # Classify all files in Downloads folder by extension
-python file_classifier.py ~/Downloads ~/Organized
+python -m fl_classifier ~/Downloads ~/Organized
 
 # Classify files and folders, create copies instead of moving
-python file_classifier.py ~/Documents ~/Organized -f -c
+python -m fl_classifier ~/Documents ~/Organized -f -c
 
 # Create symlinks instead of moving files
-python file_classifier.py ~/Pictures ~/Organized -l
+python -m fl_classifier ~/Pictures ~/Organized -l
 
 # Preview what would happen without making any changes
-python file_classifier.py ~/Desktop -d
+python -m fl_classifier ~/Desktop -d
 ```
 
 ### Time-based Organization
 
 ```bash
 # Organize files by their modification time (year-month)
-python file_classifier.py ~/Documents ~/TimeOrganized -t
+python -m fl_classifier ~/Documents ~/TimeOrganized -t
 
 # Organize by creation date with year-month-day format
-python file_classifier.py ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
+python -m fl_classifier ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
 
 # Organize files and folders by access time
-python file_classifier.py ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
+python -m fl_classifier ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
 ```
 
 ## Troubleshooting
@@ -169,7 +163,7 @@ python file_classifier.py ~/Downloads ~/AccessOrganized -t --time-attr accessed 
 
 **Solution**: Use `--dry-run` flag to see what would happen without making changes:
 ```bash
-python file_classifier.py ~/Downloads ~/Organized --dry-run
+python -m fl_classifier ~/Downloads ~/Organized --dry-run
 ```
 
 ### Issue: Permission denied errors

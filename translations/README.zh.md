@@ -48,16 +48,10 @@
 
 ## 安装
 
-下载脚本并使其可执行：
+如果您有源代码，可以将其作为模块运行：
 
 ```bash
-chmod +x file_classifier.py
-```
-
-或直接用 Python 运行：
-
-```bash
-python file_classifier.py [选项]
+python -m fl_classifier [选项]
 ```
 
 ## 使用方法
@@ -65,7 +59,7 @@ python file_classifier.py [选项]
 ### 基本用法
 
 ```bash
-python file_classifier.py 源目录 [目标目录]
+python -m fl_classifier 源目录 [目标目录]
 ```
 
 如果未指定 `目标目录`，文件将在名为 `./classified` 的新目录中组织。
@@ -101,29 +95,29 @@ python file_classifier.py 源目录 [目标目录]
 
 ```bash
 # 按扩展名对下载文件夹中的所有文件进行分类
-python file_classifier.py ~/Downloads ~/Organized
+python -m fl_classifier ~/Downloads ~/Organized
 
 # 分类文件和文件夹，创建副本而不是移动
-python file_classifier.py ~/Documents ~/Organized -f -c
+python -m fl_classifier ~/Documents ~/Organized -f -c
 
 # 创建符号链接而不是移动文件
-python file_classifier.py ~/Pictures ~/Organized -l
+python -m fl_classifier ~/Pictures ~/Organized -l
 
 # 预览将要执行的操作而不进行任何更改
-python file_classifier.py ~/Desktop -d
+python -m fl_classifier ~/Desktop -d
 ```
 
 ### 基于时间的组织
 
 ```bash
 # 按修改时间（年-月）组织文件
-python file_classifier.py ~/Documents ~/TimeOrganized -t
+python -m fl_classifier ~/Documents ~/TimeOrganized -t
 
 # 按创建日期组织，使用年-月-日格式
-python file_classifier.py ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
+python -m fl_classifier ~/Photos ~/Chronological -t --time-attr created --time-format "%Y-%m-%d"
 
 # 按访问时间组织文件和文件夹
-python file_classifier.py ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
+python -m fl_classifier ~/Downloads ~/AccessOrganized -t --time-attr accessed -f
 ```
 
 ## 常见问题
